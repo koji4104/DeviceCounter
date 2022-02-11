@@ -7,6 +7,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'device_model.dart';
 import 'device_provider.dart';
@@ -42,15 +43,15 @@ class DeviceScreen extends ConsumerWidget {
             child: Container(
               margin: EdgeInsets.only(left:2, top:5, right:2, bottom:2),
               width:ICON_SIZE-2, height:ICON_SIZE-2,
-              child: CircularProgressIndicator(value: progress)
+              child: CircularProgressIndicator(value:progress, color:Colors.orange)
             )),
           IconButton(
-              icon: Icon(Icons.wifi),
+              icon: Icon(ICON_SCAN),
               iconSize: ICON_SIZE,
               onPressed: () => icmpScan(context,ref),
             ),
           IconButton(
-              icon: Icon(Icons.phone_android),
+              icon: Icon(ICON_UPNP),
               iconSize: ICON_SIZE,
               onPressed: () => discoverUpnp(context,ref),
             ),
@@ -60,9 +61,10 @@ class DeviceScreen extends ConsumerWidget {
             itemBuilder: (BuildContext context) => [
               PopupMenuItem(
                 child: ListTile(
-                  leading: Icon(Icons.dark_mode_outlined),
+                  leading: Icon(Icons.dark_mode),
                   title: Text('Darkmode'),
                   onTap: () {
+                    print('Darkmode');
                     bool isDark = ref.read(isDarkProvider);
                     ref.read(isDarkProvider.state).state = !isDark;
                   },
@@ -70,7 +72,7 @@ class DeviceScreen extends ConsumerWidget {
               ),
               PopupMenuItem(
                 child: ListTile(
-                  leading: Icon(Icons.info_outline),
+                  leading: Icon(ICON_WIFI),
                   title: Text('Wifi info'),
                   onTap: () => networkInfo(context,ref),
                 )
@@ -122,6 +124,10 @@ class DeviceScreen extends ConsumerWidget {
   /// IP address list in the same network
   /// use lan_scanner.dart
   icmpScan(BuildContext context, WidgetRef ref) async {
+    if (kIsWeb){
+      print('-- kIsWeb');
+      return;
+    }
     try {
       var wifiIP = await (NetworkInfo().getWifiIP());
       if(wifiIP!=null) {
@@ -143,7 +149,8 @@ class DeviceScreen extends ConsumerWidget {
 
         stream.listen((HostModel device) async {
           print("-- scan found ${device.ip}");
-          String name = await ip2host(device.ip);
+          //String name = await ip2host(device.ip);
+          String name = device.ip;
           DeviceData data = DeviceData(name:name);
           data.ipv4 = device.ip;
           ref.read(deviceListProvider).add(data);
@@ -175,6 +182,11 @@ class DeviceScreen extends ConsumerWidget {
   /// Own Wifi information
   /// use network_info_plus.dart
   networkInfo(BuildContext context, WidgetRef ref) async {
+    if (kIsWeb){
+      print('-- kIsWeb');
+      return;
+    }
+
     print('-- network_info_plus');
     String? wifiName,
         wifiBSSID,
@@ -183,7 +195,6 @@ class DeviceScreen extends ConsumerWidget {
         wifiGatewayIP,
         wifiBroadcast,
         wifiSubmask;
-    bool kIsWeb = false;
     try {
       if (!kIsWeb && Platform.isIOS) {
         var status = await _networkInfo.getLocationServiceAuthorization();
@@ -275,6 +286,10 @@ class DeviceScreen extends ConsumerWidget {
   /// Discover with Upnp
   /// use skein_upnp.dart
   discoverUpnp(BuildContext context, WidgetRef ref) async {
+    if (kIsWeb){
+      print('-- kIsWeb');
+      return;
+    }
     print('-- UPnP');
     try {
       var discoverer = new upnplib.DeviceDiscoverer();

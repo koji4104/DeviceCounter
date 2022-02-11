@@ -1,47 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'device_model.dart';
-import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-/// sample data
-String testData = '''[
-{"name":"AAA-100000"}
-,{"name":"BBB-100000"}
-,{"name":"CCC-100000"}
-]''';
-
-class SampleUpnpData extends UpnpData {
-  String deviceType='Test';
-  String urlBase='Test';
-  String friendlyName='Test';
-  String manufacturer='Test';
-  String modelName='Test';
-  String udn='Test';
-  String uuid='Test';
-  String url='Test';
-  String presentationUrl='http://192.168.103.31/test';
-  String modelType='Test';
-  String modelDescription='Test';
-  String modelNumber='Test';
-  String manufacturerUrl='Test';
-  SampleDevice(){}
-}
+const IconData ICON_WIFI = Icons.wifi;
+const IconData ICON_SCAN = Icons.search;
+const IconData ICON_UPNP = Icons.scanner;
 
 final deviceListProvider = ChangeNotifierProvider((ref) => deviceListNotifier(ref));
 class deviceListNotifier extends ChangeNotifier {
   List<DeviceData> list = [];
   String selectid = "";
-  bool isTest = false;
 
   deviceListNotifier(ref){
-    if(isTest){
-      var json = jsonDecode(testData);
-      for(var j in json){
-        DeviceData data = DeviceData(name:j['name']);
-        data.upnpData = SampleUpnpData();
-        data.upnpData!.friendlyName = j['name'];
-        list.add(data);
-      }
+    if(kIsWeb){
+      UpnpData upnp = SampleUpnpData();
+      DeviceData d1 = DeviceData(name:upnp.friendlyName);
+      d1.upnpData = upnp;
+      this.add(d1);
+
+      NetworkData nw = SampleNetworkData();
+      DeviceData d2 = DeviceData(name:nw.wifiIPv4);
+      d2.networkData = nw;
+      this.add(d2);
+
+      DeviceData d3 = DeviceData(name:'10.0.2.25');
+      d3.ipv4 = '10.0.2.25';
+      this.add(d3);
     }
   }
 
@@ -53,8 +38,10 @@ class deviceListNotifier extends ChangeNotifier {
       if(d.deviceid == newdata.deviceid){
         find = true;
       }
-      if(d.ipv4 == newdata.ipv4){
-        find = true;
+      if(d.ipv4!='' && newdata.ipv4!=''){
+        if(d.ipv4 == newdata.ipv4){
+          find = true;
+        }
       }
       if(d.upnpData!=null && newdata.upnpData!=null){
         if(d.upnpData!.uuid == newdata.upnpData!.uuid){
@@ -115,5 +102,8 @@ class colorNotifier extends ChangeNotifier {
   Color get panelFgColor => isDark ? Color(0xFFFFFFFF) : Color(0xFF222222);
   Color get menuBgColor => isDark ? Color(0xFF223355) : Color(0xFF223355);
   Color get menuFgColor => isDark ? Color(0xFFFFFFFF) : Color(0xFFFFFFFF);
+  Color get shadowColor => isDark ? Color(0xFF222222) : Color(0xFFCCCCCC);
+
+  Color get detailKeyColor => isDark ? Color(0xFFCCCCCC) : Color(0xFF555555);
 }
 

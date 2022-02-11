@@ -72,7 +72,7 @@ packages:
     source: hosted
     version: "0.3.5"
   collection:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: collection
       url: "https://pub.dartlang.org"
@@ -270,13 +270,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.1"
-  multicast_dns:
-    dependency: "direct main"
-    description:
-      name: multicast_dns
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.3.1"
   network_info_plus:
     dependency: "direct main"
     description:
@@ -354,13 +347,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.4.0"
-  platform:
-    dependency: transitive
-    description:
-      name: platform
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.1.0"
   plugin_platform_interface:
     dependency: transitive
     description:
@@ -375,13 +361,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.5.0"
-  process:
-    dependency: transitive
-    description:
-      name: process
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "4.2.4"
   pub_semver:
     dependency: transitive
     description:
@@ -424,13 +403,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.1"
-  shell:
-    dependency: "direct main"
-    description:
-      name: shell
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.0"
   skein_upnp:
     dependency: "direct main"
     description:

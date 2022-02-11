@@ -20,10 +20,10 @@ class Localized {
 
   static Map<String, Map<String, String>> _localizedValues = {
     'en': {
-      'settings_title': 'Settings',
+      'settings_title': 'If you dont see the WifiName, please allow the app in Settings Privacy Protection Location.',
     },
     'ja': {
-      'settings_title': '設定',
+      'settings_title': 'WifiNameが出ない場合、設定 プライバシー保護 位置情報 でアプリを許可してください。',
     },
   };
 

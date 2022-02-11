@@ -5,7 +5,7 @@ class Responsive extends StatelessWidget {
   final Widget? tablet;
   final Widget desktop;
 
-  static final double mobileWidth = 800.0;
+  static final double mobileWidth = 600.0;
   static final double desktopWidth = 1000.0;
 
   const Responsive({

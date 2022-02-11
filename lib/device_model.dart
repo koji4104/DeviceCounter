@@ -82,3 +82,31 @@ class NetworkData{
     if (wifiSubmask != null) this.wifiSubmask = wifiSubmask;
   }
 }
+
+class SampleUpnpData extends UpnpData {
+  String deviceType='urn:schemas-upnp-org:device:MediaServer:1';
+  String urlBase='http://10.0.2.17:49152/devinfo.xml';
+  String friendlyName='ABCD-0001';
+  String manufacturer='Example Corporation';
+  String modelName='ABCD-A';
+  String udn='uuid:12345678-1111-2222-3333-1234567890ab';
+  String uuid='12345678-1111-2222-3333-1234567890ab';
+  String url='http://10.0.2.17:2800/upnphost/udhisapi.dll?content=uuid:12345678-1111-2222-3333-1234567890ab';
+  String presentationUrl='http://10.0.2.17';
+  String modelType='';
+  String modelDescription='Wireless Network Camera';
+  String modelNumber='';
+  String manufacturerUrl='http://www.example.com';
+  SampleDevice(){}
+}
+
+class SampleNetworkData extends NetworkData {
+  String wifiName = "Example spot";
+  String wifiBSSID = "02:00:00:00:00:00";
+  String wifiIPv4 = "10.0.2.16";
+  String wifiIPv6 = "fe80::1111:2222:3333:4444";
+  String wifiGatewayIP = "10.0.2.2";
+  String wifiBroadcast = "/10.0.2.255";
+  String wifiSubmask = "255.255.255.0";
+  SampleNetworkData();
+}

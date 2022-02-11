@@ -20,7 +20,7 @@ class MyApp extends ConsumerWidget {
         backgroundColor: Colors.indigo,
         pageTransitionsTheme: MyPageTransitionsTheme(),
       ) :ThemeData.light().copyWith(
-        scaffoldBackgroundColor: Color(0xFFDDDDDD),
+        scaffoldBackgroundColor: Colors.white,
         backgroundColor: Colors.indigo,
         pageTransitionsTheme: MyPageTransitionsTheme(),
       ),

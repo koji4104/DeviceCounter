@@ -8,6 +8,9 @@ import 'device_provider.dart';
 import 'responsive.dart';
 
 class DeviceCard extends ConsumerWidget {
+  double FSIZE_SIMPLE = 14;
+  double FSIZE_DETAIL = 14;
+
   DeviceCard({DeviceData? data, bool? isDetail}) {
     if(data!=null) this.data = data;
     if(isDetail!=null) this.isDetail = isDetail;
@@ -16,7 +19,22 @@ class DeviceCard extends ConsumerWidget {
   DeviceData data = DeviceData();
   bool isDetail = false;
   Color panelFgColor = Color(0xFF888888);
+  Color detailKeyColor = Color(0xFF888888);
   BuildContext? context;
+
+  double cardWidth = 400.0;
+  double cardHeight = 40.0;
+  double detailKeyWidth = 100.0;
+  double detailValWidth = 200.0;
+
+  calcSize(BuildContext context){
+    cardHeight = this.isDetail ? Responsive.getSize(context).height-50 : 48;
+    if (Responsive.isMobile(context)){
+      detailValWidth = Responsive.getSize(context).width - detailKeyWidth - 50;
+    }else {
+      detailValWidth = Responsive.getSize(context).width/2 - detailKeyWidth - 50;
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,27 +42,42 @@ class DeviceCard extends ConsumerWidget {
     ref.watch(deviceListProvider);
     final col = ref.watch(colorProvider);
     this.panelFgColor = col.panelFgColor;
+    this.detailKeyColor = col.detailKeyColor;
+    calcSize(context);
 
     return Container(
-      width: 400, height: this.isDetail ? Responsive.getSize(context).height-50 : 70,
+      width: cardWidth,
+      height: cardHeight,
       margin: EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
         color: col.panelBgColor,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: [BoxShadow(
+          color:col.shadowColor,
+          spreadRadius:1.0,
+          blurRadius:5.0,
+          offset: Offset(2,2),
+        )]
       ),
-      padding: EdgeInsets.all(4),
+      padding: EdgeInsets.all(8),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () {
-          if(Responsive.isMobile(context)) {
-            if (isDetail == false) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => DeviceDetailScreen(data))
-              );
+          if (isDetail == false) {
+            if (Responsive.isMobile(context)) {
+              if (data.networkData != null || data.upnpData != null) {
+                Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (context) => DeviceDetailScreen(data))
+                );
+              }
+            } else {
+              if (data.networkData != null || data.upnpData != null) {
+                ref.read(deviceListProvider).select(data.deviceid);
+              } else {
+                ref.read(deviceListProvider).select('');
+              }
             }
-          } else {
-            ref.read(deviceListProvider).select(data.deviceid);
           }
         },
         child: getWidget(context),
@@ -53,141 +86,124 @@ class DeviceCard extends ConsumerWidget {
   }
 
   Widget getWidget(BuildContext context) {
-    return getWidget1();
-  }
-
-  Widget getWidget1() {
-    if (isDetail == false) {
-      return Stack(children: [
-        Container(
-          padding: EdgeInsets.only(top: 4, left: 2),
-          child: getIcon(),
-        ),
-        Container(
-          padding: EdgeInsets.only(top: 4, left: 36),
-          child: getText()
-        ),
-      ]);
-    } else {
-      return 
-        Container(
-          padding: EdgeInsets.only(top: 4, left: 4),
-          child: getText()
-        );
-    }
-  }
-
-  Widget getIcon() {
     if(data.networkData!=null) {
-      return Icon(Icons.info_outline, color: Colors.green);
+      return getWifiWidget();
     } else if(data.upnpData!=null) {
-      return Icon(Icons.phone_android, color:Colors.blue);
+      return getUpnpWidget();
     } else {
-      return Icon(Icons.wifi, color:Colors.orange);
+      return getScanWidget();
     }
   }
 
-  Widget getText() {
-    if(data.networkData!=null) {
-      return getNetworkText();
-    } else if(data.upnpData!=null) {
-      return getUpnpDeviceText();
+  Widget getWifiWidget() {
+    if(isDetail) {
+      return Column(
+        crossAxisAlignment:CrossAxisAlignment.start,
+        children: [
+          textDetail('WifiName', data.networkData!.wifiName),
+          textDetail('BSSID', data.networkData!.wifiBSSID),
+          textDetail('IPv4', data.networkData!.wifiIPv4),
+          textDetail('IPv6', data.networkData!.wifiIPv6),
+          textDetail('GatewayIP',data.networkData!.wifiGatewayIP),
+          textDetail('Broadcast',data.networkData!.wifiBroadcast),
+          textDetail('Submask',data.networkData!.wifiSubmask),
+        ]);
     } else {
-      return getText1(data.name, 16);
+      return textSimple(Icon(ICON_WIFI, color:Colors.blue), data.networkData!.wifiIPv4, data.networkData!.wifiName, true);
     }
   }
 
-  Widget getUpnpDeviceText() {
+  Widget getUpnpWidget() {
     UpnpData? d = data.upnpData;
     if(d==null)
-      return getText1('Nodate',16);
+      return textSimple(Icon(ICON_UPNP), 'Nodate', '', false);
 
     if(isDetail) {
       List<Widget> list = [];
-      list.add(getText2('Name', d.friendlyName));
-      list.add(getText2('Desc', d.modelDescription));
-      list.add(getText2('deviceType', d.deviceType));
-      list.add(getText2('urlBase', d.urlBase));
-      list.add(getText2('Mfr', d.manufacturer));
-      list.add(getText2('Model', d.modelName));
-      list.add(getText2('udn', d.udn));
-      list.add(getText2('uuid', d.uuid));
-      list.add(getText2('url', d.url));
-      list.add(getText2('modelType', d.modelType));
-      list.add(getText2('manufacturerUrl', d.manufacturerUrl));
-      list.add(getTextUrl(d.presentationUrl));
+      list.add(textDetail('Name', d.friendlyName));
+      list.add(textDetail('Desc', d.modelDescription));
+      list.add(textDetail('DeviceType', d.deviceType));
+      list.add(textDetail('Mfr', d.manufacturer));
+      list.add(textDetail('Model', d.modelName));
+      list.add(textDetail('Udn', d.udn));
+      list.add(textDetail('Uuid', d.uuid));
+      list.add(textDetail('ModelType', d.modelType));
+
+      list.add(textDetail('',''));
+
+      list.add(textDetail('Url', d.url));
+      list.add(textDetail('Base', d.urlBase));
+      list.add(textDetail('Manufacturer', d.manufacturerUrl));
+      list.add(textDetail('Presentation', d.presentationUrl));
+
+      list.add(launchButton(d.presentationUrl));
 
       for (upnplib.ServiceDescription svc in d.services) {
-        list.add(getText2('service id', svc.id));
-        list.add(getText2('type', svc.type));
-        list.add(getText2('eventSubUrl', svc.eventSubUrl));
-        list.add(getText2('scpdUrl', svc.scpdUrl!));
-        list.add(getText2('controlUrl', svc.controlUrl));      
-      }      
+        list.add(textDetail('service id', svc.id));
+        list.add(textDetail('type', svc.type));
+        list.add(textDetail('event', svc.eventSubUrl));
+        list.add(textDetail('scpd', svc.scpdUrl!));
+        list.add(textDetail('control', svc.controlUrl));
+      }
       return Column(
         crossAxisAlignment:CrossAxisAlignment.start,
         children: list);
     } else {
-      return Column(
-        crossAxisAlignment:CrossAxisAlignment.start,
-        children: [
-          getText1(d.friendlyName, 16),
-          getText1(d.modelName, 14),
-          getText1(d.manufacturer, 14),
-      ]);
+      return textSimple(Icon(ICON_UPNP), d.friendlyName, d.manufacturer, true);
     }
   }
 
-  Widget getNetworkText() {
+  Widget getScanWidget() {
     if(isDetail) {
-      return Column(
-        crossAxisAlignment:CrossAxisAlignment.start,
-        children: [
-        getText2('wifiName', data.networkData!.wifiName),
-        getText2('wifiBSSID', data.networkData!.wifiBSSID),
-        getText2('wifiIPv4', data.networkData!.wifiIPv4),
-        getText2('wifiIPv6', data.networkData!.wifiIPv6),
-        getText2('wifiGatewayIP',data.networkData!.wifiGatewayIP),
-        getText2('wifiBroadcast',data.networkData!.wifiBroadcast),
-        getText2('wifiSubmask',data.networkData!.wifiSubmask),
-      ]);
+      return textSimple(null, data.name, '', false);
     } else {
-      return Column(
-        crossAxisAlignment:CrossAxisAlignment.start,
-        children: [
-        getText1(data.networkData!.wifiIPv4, 14),
-        getText1(data.networkData!.wifiName, 16),
-      ]);
+      return textSimple(Icon(ICON_SCAN, color:Colors.orange), data.name, '', false);
     }
   }
 
-  Widget getText1(String t1, double size) {
-    return Text(t1,style:TextStyle(fontSize: size, color: panelFgColor));
-  }
-
-  Widget getText2(String t1, String t2) {
-    double size = 13;
-    if(t2.length>30) 
-      size=11;
+  Widget textSimple(Icon? icon, String s1, String s2, bool detail) {
     return Row(children: [
-      Text(t1,style:TextStyle(fontSize: 11, color: panelFgColor)),
+      if(icon!=null) icon,
+      if(icon!=null) SizedBox(width: 8),
+      Text(s1,style:TextStyle(fontSize: FSIZE_SIMPLE, color:panelFgColor)),
       Expanded(child: SizedBox(width: 1)),
-      Text(t2,style:TextStyle(fontSize: size, color: panelFgColor)),
+      Text(s2,style:TextStyle(fontSize: FSIZE_SIMPLE, color:panelFgColor)),
+      if(detail) SizedBox(width: 8),
+      if(detail) Icon(Icons.arrow_forward_ios, size:14, color:Colors.grey),
     ]);
-
   }
-  Widget getTextUrl(String url) {
-    return Row(children: [
-      Expanded(child:Text(url,style:TextStyle(fontSize: 11, color: panelFgColor))),
-      url.contains('http')==false ? Container() :
-        IconButton(
-          icon: Icon(Icons.arrow_forward_outlined),
-          iconSize: 18.0,
-          onPressed: (){
-            _launchURL(url);
-          }
-        ),
-    ]);
+
+  Widget textDetail(String s1, String s2) {
+    return Container(
+      padding: EdgeInsets.only(bottom:4),
+      child: Row(children: [
+      Container(
+        width: detailKeyWidth,
+        child: Text(s1,
+          style:TextStyle(fontSize: FSIZE_DETAIL, color:detailKeyColor),
+          textAlign: TextAlign.right,
+        )
+      ),
+      SizedBox(width: 12),
+      Container(
+        width: detailValWidth,
+        child: Text(s2,
+        style:TextStyle(fontSize: FSIZE_DETAIL, color:panelFgColor),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 2,
+      )),
+    ]));
+  }
+
+  Widget launchButton(String url) {
+    if(url.contains('http')==false)
+      return Container();
+    else
+      return IconButton(
+        icon: Icon(Icons.arrow_forward),
+        iconSize: 14.0,
+        onPressed: (){ _launchURL(url); }
+      );
   }
 
   _launchURL(String url) async {
@@ -220,8 +236,12 @@ class DeviceDetailScreen extends ConsumerWidget {
           foregroundColor: col.menuFgColor,
         ),
         body: Container(
-          margin: EdgeInsets.only(left: 8, top: 8, right: 8, bottom: 8),
-          child:DeviceCard(data: data, isDetail: true)
+          margin: EdgeInsets.all(8),
+          child: ListView.builder(
+            itemCount: 1,
+            itemBuilder: (BuildContext context, int index) {
+            return DeviceCard(data: data, isDetail: true);
+          })
         )
     );
   }
