@@ -9,10 +9,10 @@ class DeviceData{
   String ipv6 = "";
   
   UpnpData? upnpData;
-  NetworkData? networkData;
+  WifiData? wifiData;
 
-  DeviceData({String? name}) {
-    if(name!=null) this.name = name;
+  DeviceData({String? ipv4}) {
+    if(ipv4!=null) this.ipv4 = ipv4;
     this.deviceid = Uuid().v1();
   }
 }
@@ -63,7 +63,7 @@ class UpnpData {
 }
 
 /// for network_info_plus.dart
-class NetworkData{
+class WifiData{
   String wifiName = "";
   String wifiBSSID = "";
   String wifiIPv4 = "";
@@ -71,7 +71,7 @@ class NetworkData{
   String wifiGatewayIP = "";
   String wifiBroadcast = "";
   String wifiSubmask = "";
-  NetworkData({String? wifiName, String? wifiBSSID, String? wifiIPv4, String? wifiIPv6,
+  WifiData({String? wifiName, String? wifiBSSID, String? wifiIPv4, String? wifiIPv6,
     String? wifiGatewayIP, String? wifiBroadcast, String? wifiSubmask}) {
     if (wifiName != null) this.wifiName = wifiName;
     if (wifiBSSID != null) this.wifiBSSID = wifiBSSID;
@@ -100,7 +100,7 @@ class SampleUpnpData extends UpnpData {
   SampleDevice(){}
 }
 
-class SampleNetworkData extends NetworkData {
+class SampleWifiData extends WifiData {
   String wifiName = "Example spot";
   String wifiBSSID = "02:00:00:00:00:00";
   String wifiIPv4 = "10.0.2.16";
@@ -108,5 +108,5 @@ class SampleNetworkData extends NetworkData {
   String wifiGatewayIP = "10.0.2.2";
   String wifiBroadcast = "/10.0.2.255";
   String wifiSubmask = "255.255.255.0";
-  SampleNetworkData();
+  SampleWifiData();
 }

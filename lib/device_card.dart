@@ -28,10 +28,19 @@ class DeviceCard extends ConsumerWidget {
   double detailValWidth = 200.0;
 
   calcSize(BuildContext context){
-    cardHeight = this.isDetail ? Responsive.getSize(context).height-50 : 48;
+    if(this.isDetail){
+      if(data.upnpData != null){
+        cardHeight = 420 + data.upnpData!.services.length * 220;
+      } else {
+        cardHeight = 300;
+      }
+    } else {
+      cardHeight = 48;
+    }
+
     if (Responsive.isMobile(context)){
       detailValWidth = Responsive.getSize(context).width - detailKeyWidth - 50;
-    }else {
+    } else {
       detailValWidth = Responsive.getSize(context).width/2 - detailKeyWidth - 50;
     }
   }
@@ -65,14 +74,14 @@ class DeviceCard extends ConsumerWidget {
         onTap: () {
           if (isDetail == false) {
             if (Responsive.isMobile(context)) {
-              if (data.networkData != null || data.upnpData != null) {
+              if (data.wifiData != null || data.upnpData != null) {
                 Navigator.of(context).push(
                     MaterialPageRoute(
                         builder: (context) => DeviceDetailScreen(data))
                 );
               }
             } else {
-              if (data.networkData != null || data.upnpData != null) {
+              if (data.wifiData != null || data.upnpData != null) {
                 ref.read(deviceListProvider).select(data.deviceid);
               } else {
                 ref.read(deviceListProvider).select('');
@@ -86,7 +95,7 @@ class DeviceCard extends ConsumerWidget {
   }
 
   Widget getWidget(BuildContext context) {
-    if(data.networkData!=null) {
+    if(data.wifiData!=null) {
       return getWifiWidget();
     } else if(data.upnpData!=null) {
       return getUpnpWidget();
@@ -100,64 +109,63 @@ class DeviceCard extends ConsumerWidget {
       return Column(
         crossAxisAlignment:CrossAxisAlignment.start,
         children: [
-          textDetail('WifiName', data.networkData!.wifiName),
-          textDetail('BSSID', data.networkData!.wifiBSSID),
-          textDetail('IPv4', data.networkData!.wifiIPv4),
-          textDetail('IPv6', data.networkData!.wifiIPv6),
-          textDetail('GatewayIP',data.networkData!.wifiGatewayIP),
-          textDetail('Broadcast',data.networkData!.wifiBroadcast),
-          textDetail('Submask',data.networkData!.wifiSubmask),
+          textDetail('WifiName', data.wifiData!.wifiName),
+          textDetail('BSSID', data.wifiData!.wifiBSSID),
+          textDetail('IPv4', data.wifiData!.wifiIPv4),
+          textDetail('IPv6', data.wifiData!.wifiIPv6),
+          textDetail('GatewayIP',data.wifiData!.wifiGatewayIP),
+          textDetail('Broadcast',data.wifiData!.wifiBroadcast),
+          textDetail('Submask',data.wifiData!.wifiSubmask),
         ]);
     } else {
-      return textSimple(Icon(ICON_WIFI, color:Colors.blue), data.networkData!.wifiIPv4, data.networkData!.wifiName, true);
+      return textSimple(Icon(ICON_WIFI, color:Colors.blue), data.ipv4, data.wifiData!.wifiName, true);
     }
   }
 
-  Widget getUpnpWidget() {
+  Widget getUpnpWidget(){
     UpnpData? d = data.upnpData;
     if(d==null)
       return textSimple(Icon(ICON_UPNP), 'Nodate', '', false);
 
-    if(isDetail) {
+    if(isDetail){
       List<Widget> list = [];
       list.add(textDetail('Name', d.friendlyName));
-      list.add(textDetail('Desc', d.modelDescription));
+      list.add(textDetail('Description', d.modelDescription));
       list.add(textDetail('DeviceType', d.deviceType));
-      list.add(textDetail('Mfr', d.manufacturer));
+      list.add(textDetail('Manufacturer', d.manufacturer));
       list.add(textDetail('Model', d.modelName));
       list.add(textDetail('Udn', d.udn));
       list.add(textDetail('Uuid', d.uuid));
       list.add(textDetail('ModelType', d.modelType));
 
       list.add(textDetail('',''));
-
       list.add(textDetail('Url', d.url));
       list.add(textDetail('Base', d.urlBase));
       list.add(textDetail('Manufacturer', d.manufacturerUrl));
       list.add(textDetail('Presentation', d.presentationUrl));
 
-      list.add(launchButton(d.presentationUrl));
-
-      for (upnplib.ServiceDescription svc in d.services) {
+      for(upnplib.ServiceDescription svc in d.services){
+        list.add(textDetail('',''));
         list.add(textDetail('service id', svc.id));
         list.add(textDetail('type', svc.type));
         list.add(textDetail('event', svc.eventSubUrl));
         list.add(textDetail('scpd', svc.scpdUrl!));
         list.add(textDetail('control', svc.controlUrl));
       }
+
       return Column(
         crossAxisAlignment:CrossAxisAlignment.start,
         children: list);
     } else {
-      return textSimple(Icon(ICON_UPNP), d.friendlyName, d.manufacturer, true);
+      return textSimple(Icon(ICON_UPNP), data.ipv4, d.friendlyName, true);
     }
   }
 
-  Widget getScanWidget() {
-    if(isDetail) {
+  Widget getScanWidget(){
+    if(isDetail){
       return textSimple(null, data.name, '', false);
     } else {
-      return textSimple(Icon(ICON_SCAN, color:Colors.orange), data.name, '', false);
+      return textSimple(Icon(ICON_SCAN, color:Colors.orange), data.ipv4, '', false);
     }
   }
 
@@ -174,6 +182,8 @@ class DeviceCard extends ConsumerWidget {
   }
 
   Widget textDetail(String s1, String s2) {
+    bool isHttp = s2.contains('http');
+
     return Container(
       padding: EdgeInsets.only(bottom:4),
       child: Row(children: [
@@ -185,13 +195,16 @@ class DeviceCard extends ConsumerWidget {
         )
       ),
       SizedBox(width: 12),
-      Container(
+      GestureDetector(
+      child: Container(
         width: detailValWidth,
         child: Text(s2,
-        style:TextStyle(fontSize: FSIZE_DETAIL, color:panelFgColor),
+        style:TextStyle(fontSize: FSIZE_DETAIL, color:isHttp?Colors.blue:panelFgColor),
         overflow: TextOverflow.ellipsis,
-        maxLines: 2,
+        maxLines: 3,
       )),
+      onTap:(){ if(isHttp) _launchURL(s2); },
+      )
     ]));
   }
 
@@ -200,8 +213,8 @@ class DeviceCard extends ConsumerWidget {
       return Container();
     else
       return IconButton(
-        icon: Icon(Icons.arrow_forward),
-        iconSize: 14.0,
+        icon: Icon(Icons.arrow_forward_ios),
+        iconSize: 8.0,
         onPressed: (){ _launchURL(url); }
       );
   }

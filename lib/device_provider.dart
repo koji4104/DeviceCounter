@@ -14,18 +14,17 @@ class deviceListNotifier extends ChangeNotifier {
 
   deviceListNotifier(ref){
     if(kIsWeb){
-      UpnpData upnp = SampleUpnpData();
-      DeviceData d1 = DeviceData(name:upnp.friendlyName);
-      d1.upnpData = upnp;
+      WifiData wd = SampleWifiData();
+      DeviceData d1 = DeviceData(ipv4:'10.0.2.16');
+      d1.wifiData = wd;
       this.add(d1);
 
-      NetworkData nw = SampleNetworkData();
-      DeviceData d2 = DeviceData(name:nw.wifiIPv4);
-      d2.networkData = nw;
+      UpnpData upnp = SampleUpnpData();
+      DeviceData d2 = DeviceData(ipv4:'10.0.2.17');
+      d2.upnpData = upnp;
       this.add(d2);
 
-      DeviceData d3 = DeviceData(name:'10.0.2.25');
-      d3.ipv4 = '10.0.2.25';
+      DeviceData d3 = DeviceData(ipv4:'10.0.2.25');
       this.add(d3);
     }
   }
@@ -33,34 +32,47 @@ class deviceListNotifier extends ChangeNotifier {
   /// Add.
   /// Do not add the same.
   add(DeviceData newdata){
-    bool find = false;
-    for(DeviceData d in list) {
-      if(d.deviceid == newdata.deviceid){
-        find = true;
+    // Wifi
+    if(newdata.wifiData!=null){
+      if(list.length==0){
+        list.add(newdata);
+        this.notifyListeners();
+      } else {
+        if(list[0].ipv4 != newdata.ipv4){
+          list[0].ipv4 = newdata.ipv4;
+          list[0].wifiData = newdata.wifiData;
+          this.notifyListeners();
+        }
       }
-      if(d.ipv4!='' && newdata.ipv4!=''){
+    }
+    // Upnp
+    else if(newdata.upnpData!=null){
+      bool find = false;
+      for(DeviceData d in list){
+        if (d.upnpData != null && d.upnpData!.uuid == newdata.upnpData!.uuid){
+          find = true;
+        }
+      }
+      if(find==false){
+        if(list.length==0)
+          list.add(newdata);
+        else
+          list.insert(1, newdata);
+        this.notifyListeners();
+      }
+    }
+    // Scan
+    else if(newdata.ipv4!=''){
+      bool find = false;
+      for(DeviceData d in list){
         if(d.ipv4 == newdata.ipv4){
           find = true;
         }
       }
-      if(d.upnpData!=null && newdata.upnpData!=null){
-        if(d.upnpData!.uuid == newdata.upnpData!.uuid){
-          find = true;
-        }
-      }
-      if(d.networkData!=null && newdata.networkData!=null){
-        if(d.networkData!.wifiIPv4 == newdata.networkData!.wifiIPv4){
-          find = true;
-        }
-      }      
-    }
-    if(find == false){
-      if(newdata.networkData!=null){
-        list.insert(0, newdata);
-      } else {
+      if(find==false){
         list.add(newdata);
+        this.notifyListeners();
       }
-      this.notifyListeners();
     }
   }
 
