@@ -14,6 +14,7 @@ class deviceListNotifier extends ChangeNotifier {
 
   deviceListNotifier(ref){
     if(kIsWeb){
+      // Sample data
       WifiData wd = SampleWifiData();
       DeviceData d1 = DeviceData(ipv4:'10.0.2.16');
       d1.wifiData = wd;
@@ -40,6 +41,11 @@ class deviceListNotifier extends ChangeNotifier {
       } else {
         if(list[0].ipv4 != newdata.ipv4){
           list[0].ipv4 = newdata.ipv4;
+          list[0].wifiData = newdata.wifiData;
+          this.notifyListeners();
+        } else if (list[0].ipv4 == newdata.ipv4
+          && list[0].wifiData!=null
+          && list[0].wifiData!.wifiName != newdata.wifiData!.wifiName){
           list[0].wifiData = newdata.wifiData;
           this.notifyListeners();
         }
@@ -115,7 +121,6 @@ class colorNotifier extends ChangeNotifier {
   Color get menuBgColor => isDark ? Color(0xFF223355) : Color(0xFF223355);
   Color get menuFgColor => isDark ? Color(0xFFFFFFFF) : Color(0xFFFFFFFF);
   Color get shadowColor => isDark ? Color(0xFF222222) : Color(0xFFCCCCCC);
-
   Color get detailKeyColor => isDark ? Color(0xFFCCCCCC) : Color(0xFF555555);
 }
 

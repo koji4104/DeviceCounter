@@ -13,8 +13,11 @@ import 'device_model.dart';
 import 'device_provider.dart';
 import 'device_card.dart';
 import 'responsive.dart';
+import 'localizations.dart';
 
 const double ICON_SIZE = 32;
+const double POPUP_ICON_SIZE = 24;
+const double POPUP_FONT_SIZE = 14;
 
 class DeviceScreen extends ConsumerWidget {
   DeviceScreen() {}
@@ -22,7 +25,7 @@ class DeviceScreen extends ConsumerWidget {
   final NetworkInfo _networkInfo = NetworkInfo();
   final LanScanner scanner = LanScanner(debugLogging: false);
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool isWifi = false;
+  bool isInitWifi = false;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,29 +33,21 @@ class DeviceScreen extends ConsumerWidget {
     final col = ref.watch(colorProvider);
     final progress = ref.watch(scanProgressProvider);
     ref.watch(deviceListProvider).selectid;
-    Future.delayed(Duration.zero, () => networkInfo(context,ref));
+    Future.delayed(Duration.zero, () => wifiInfo(context,ref));
 
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: col.menuBgColor,
         foregroundColor: col.menuFgColor,
-        title: Text(''),
-        centerTitle: true,
+        title: Text('Device Counter'),
+        centerTitle: false,
         actions: <Widget>[
           IconButton(
-              icon: Icon(ICON_WIFI),
-              iconSize: ICON_SIZE,
-              onPressed:(){
-                isWifi = false;
-                networkInfo(context,ref);
-              }
+            icon: Icon(ICON_UPNP),
+            iconSize: ICON_SIZE,
+            onPressed: () => discoverUpnp(context,ref),
           ),
-          IconButton(
-              icon: Icon(ICON_UPNP),
-              iconSize: ICON_SIZE,
-              onPressed: () => discoverUpnp(context,ref),
-            ),
           if(progress==0.0)
             IconButton(
               icon: Icon(ICON_SCAN),
@@ -60,20 +55,48 @@ class DeviceScreen extends ConsumerWidget {
               onPressed: () => icmpScan(context,ref),
             ),
           if(progress!=0.0)
-          Center(
-              child: Container(
-                  margin: EdgeInsets.only(left:4, top:4, right:4, bottom:4),
-                  width:ICON_SIZE-6, height:ICON_SIZE-6,
-                  child: CircularProgressIndicator(value:progress, color:Colors.orange, strokeWidth:2.0)
-              )),
-          IconButton(
-            icon: Icon(Icons.dark_mode),
-            iconSize: ICON_SIZE,
-            onPressed: () {
-              bool isDark = ref.read(isDarkProvider);
-              ref.read(isDarkProvider.state).state = !isDark;
-            }
-          ),
+            Center(child: Container(
+              margin: EdgeInsets.only(left:4, top:4, right:4, bottom:4),
+              width:ICON_SIZE-6, height:ICON_SIZE-6,
+              child: CircularProgressIndicator(value:progress, color:Colors.orange, strokeWidth:2.0)
+            )),
+          PopupMenuButton (
+            enableFeedback: ref.watch(isDarkProvider),
+            offset: Offset(0,50),
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(ICON_UPNP),
+                  title: Text(Localized.of(context).text("guide_upnp"), style:TextStyle(fontSize:POPUP_FONT_SIZE)),
+                  onTap:(){ discoverUpnp(context,ref); }
+                )
+              ),
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(ICON_SCAN, size:POPUP_ICON_SIZE),
+                  title: Text(Localized.of(context).text("guide_scan"), style:TextStyle(fontSize:POPUP_FONT_SIZE)),
+                  onTap:(){ icmpScan(context,ref); }
+                )
+              ),
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(ICON_WIFI, size:POPUP_ICON_SIZE),
+                  title: Text(Localized.of(context).text("guide_wifi"), style:TextStyle(fontSize:POPUP_FONT_SIZE)),
+                  onTap:(){ isInitWifi = false; wifiInfo(context,ref); }
+                )
+              ),
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(Icons.dark_mode_outlined, size:POPUP_ICON_SIZE),
+                  title: Text(Localized.of(context).text("guide_dark"), style:TextStyle(fontSize:POPUP_FONT_SIZE)),
+                  onTap:(){
+                    bool isDark = ref.read(isDarkProvider);
+                    ref.read(isDarkProvider.state).state = !isDark;
+                  },
+                )
+              ),
+            ],
+          )
         ]
       ),
       body: getListView(context,ref,deviceList),
@@ -111,88 +134,23 @@ class DeviceScreen extends ConsumerWidget {
             SizedBox(width: 8),
             Expanded(flex: 1,
               child: select==null ? Container() : ListView.builder(
-                  itemCount: 1,
-                  itemBuilder: (BuildContext context, int index) {
-                    return DeviceCard(data: select, isDetail: true);
-                  })
+                itemCount: 1,
+                itemBuilder: (BuildContext context, int index) {
+                  return DeviceCard(data: select, isDetail: true);
+                })
             )
       ]));
     }
   }
 
-  /// Scan
-  /// IP address list in the same network
-  /// use lan_scanner.dart
-  icmpScan(BuildContext context, WidgetRef ref) async {
-    if (kIsWeb){
-      print('-- kIsWeb');
-      return;
-    }
-    var wifiIP = await (NetworkInfo().getWifiIP());
-    if (wifiIP == null){
-      print('wifiIP != null');
-      return;
-    }
-    String subnet = ipToSubnet(wifiIP);
-
-    try {
-      var stream = scanner.icmpScan(
-        subnet,
-        scanSpeeed: 20,
-        timeout: const Duration(milliseconds: 100),
-        firstIP: 1,
-        lastIP: 255,
-        progressCallback: (String prog) {
-          print('Progress: $prog %');
-          double dprog = double.parse(prog);
-          if(dprog > 0.95) {
-            ref.read(scanProgressProvider.state).state = 0.0;
-          } else {
-            if(ref.read(scanProgressProvider)-dprog < -0.1)
-              ref.read(scanProgressProvider.state).state = dprog;
-          }
-        },
-      );
-      ref.read(scanProgressProvider.state).state = 0.1;
-
-      stream.listen((HostModel device) async {
-        print("-- scan found ${device.ip}");
-        //String name = await ip2host(device.ip);
-        DeviceData data = DeviceData(ipv4:device.ip);
-        ref.read(deviceListProvider).add(data);
-      });
-
-    } catch (e, stack) {
-      showSnackBar(context, "ERROR ${e}");
-    }
-  }
-
-  /// ipaddress to hostname
-  Future<String> ip2host(String ip) async {
-    String host = ip;
-    try {
-      await InternetAddress(ip)
-          .reverse()
-          .then((value) {
-        if(value.host!=null && value.host.length>0) {
-          print('ip2host ${value.host}');
-          host = value.host;
-        }
-      });
-    } catch (e, stack) {
-      //print("-- ip2host ERROR ${e}");
-    }
-    return host;
-  }
-
   /// Wifi information
   /// use network_info_plus.dart
-  networkInfo(BuildContext context, WidgetRef ref) async {
+  wifiInfo(BuildContext context, WidgetRef ref) async {
     if (kIsWeb){
       print('-- kIsWeb');
       return;
     }
-    if(isWifi){
+    if(isInitWifi){
       return;
     }
 
@@ -291,7 +249,72 @@ class DeviceScreen extends ConsumerWidget {
     data.wifiData = wd;
     ref.read(deviceListProvider).add(data);
 
-    isWifi = true;
+    isInitWifi = true;
+  }
+
+  /// Scan
+  /// IP address list in the same network
+  /// use lan_scanner.dart
+  icmpScan(BuildContext context, WidgetRef ref) async {
+    if (kIsWeb){
+      print('-- kIsWeb');
+      return;
+    }
+    var wifiIP = await (NetworkInfo().getWifiIP());
+    if (wifiIP == null){
+      print('wifiIP != null');
+      return;
+    }
+    String subnet = ipToSubnet(wifiIP);
+
+    try {
+      var stream = scanner.icmpScan(
+        subnet,
+        scanSpeeed: 20,
+        timeout: const Duration(milliseconds: 100),
+        firstIP: 1,
+        lastIP: 255,
+        progressCallback: (String prog) {
+          print('Progress: $prog %');
+          double dprog = double.parse(prog);
+          if(dprog > 0.95) {
+            ref.read(scanProgressProvider.state).state = 0.0;
+          } else {
+            if(ref.read(scanProgressProvider)-dprog < -0.1)
+              ref.read(scanProgressProvider.state).state = dprog;
+          }
+        },
+      );
+      ref.read(scanProgressProvider.state).state = 0.1;
+
+      stream.listen((HostModel device) async {
+        print("-- scan found ${device.ip}");
+        //String name = await ip2host(device.ip);
+        DeviceData data = DeviceData(ipv4:device.ip);
+        ref.read(deviceListProvider).add(data);
+      });
+
+    } catch (e, stack) {
+      showSnackBar(context, "ERROR ${e}");
+    }
+  }
+
+  /// ipaddress to hostname
+  Future<String> ip2host(String ip) async {
+    String host = ip;
+    try {
+      await InternetAddress(ip)
+          .reverse()
+          .then((value) {
+        if(value.host!=null && value.host.length>0) {
+          print('ip2host ${value.host}');
+          host = value.host;
+        }
+      });
+    } catch (e, stack) {
+      //print("-- ip2host ERROR ${e}");
+    }
+    return host;
   }
 
   /// Upnp
@@ -301,13 +324,6 @@ class DeviceScreen extends ConsumerWidget {
       print('-- kIsWeb');
       return;
     }
-
-    var wifiIP = await (NetworkInfo().getWifiIP());
-    if (wifiIP == null){
-      print('wifiIP != null');
-      return;
-    }
-    String subnet = ipToSubnet(wifiIP);
 
     print('-- UPnP');
     try {
@@ -322,7 +338,6 @@ class DeviceScreen extends ConsumerWidget {
           if(ud.url.contains('://')){
             ipv4 = ud.url.substring(ud.url.indexOf('://')+3, ud.url.indexOf(':',10));
           }
-
 
           DeviceData data = DeviceData(ipv4:ipv4);
           data.upnpData = ud;

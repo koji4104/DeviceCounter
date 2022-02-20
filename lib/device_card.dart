@@ -6,7 +6,29 @@ import 'package:url_launcher/url_launcher.dart';
 import 'device_model.dart';
 import 'device_provider.dart';
 import 'responsive.dart';
+import 'localizations.dart';
 
+/*
+[Simple]
+Icon 10.0.2.16 Example Spot
+
+[Detail]
+WifiName Example Spot
+   BSSID 02:00:00:00:00:00
+    IPv4 10.0.2.16
+
+Mobile (2 screen)
+|--------| |--------|
+|[Simple]| |[Detail]|
+|[Simple]| |        |
+|--------| |--------|
+
+Tablet (1 screen)
+|-----------------|
+|[Simple] [Detail]|
+|[Simple]         |
+|-----------------|
+*/
 class DeviceCard extends ConsumerWidget {
   double FSIZE_SIMPLE = 14;
   double FSIZE_DETAIL = 14;
@@ -27,26 +49,8 @@ class DeviceCard extends ConsumerWidget {
   double detailKeyWidth = 100.0;
   double detailValWidth = 200.0;
 
-  calcSize(BuildContext context){
-    if(this.isDetail){
-      if(data.upnpData != null){
-        cardHeight = 420 + data.upnpData!.services.length * 220;
-      } else {
-        cardHeight = 300;
-      }
-    } else {
-      cardHeight = 48;
-    }
-
-    if (Responsive.isMobile(context)){
-      detailValWidth = Responsive.getSize(context).width - detailKeyWidth - 50;
-    } else {
-      detailValWidth = Responsive.getSize(context).width/2 - detailKeyWidth - 50;
-    }
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref){
     this.context = context;
     ref.watch(deviceListProvider);
     final col = ref.watch(colorProvider);
@@ -76,8 +80,8 @@ class DeviceCard extends ConsumerWidget {
             if (Responsive.isMobile(context)) {
               if (data.wifiData != null || data.upnpData != null) {
                 Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => DeviceDetailScreen(data))
+                  MaterialPageRoute(
+                    builder: (context) => DeviceDetailScreen(data))
                 );
               }
             } else {
@@ -89,34 +93,63 @@ class DeviceCard extends ConsumerWidget {
             }
           }
         },
-        child: getWidget(context),
+        child: getWidget(),
       ),
     );
   }
 
-  Widget getWidget(BuildContext context) {
-    if(data.wifiData!=null) {
+  /// Calculate size
+  calcSize(BuildContext context){
+    if(this.isDetail){
+      if(data.upnpData != null){
+        cardHeight = 420 + data.upnpData!.services.length * 260;
+      } else {
+        cardHeight = 300;
+      }
+    } else {
+      cardHeight = 48;
+    }
+
+    if (Responsive.isMobile(context)){
+      detailValWidth = Responsive.getSize(context).width - detailKeyWidth - 50;
+    } else {
+      detailValWidth = Responsive.getSize(context).width/2 - detailKeyWidth - 50;
+    }
+  }
+
+  Widget getWidget(){
+    if(data.wifiData!=null){
       return getWifiWidget();
-    } else if(data.upnpData!=null) {
+    } else if(data.upnpData!=null){
       return getUpnpWidget();
     } else {
       return getScanWidget();
     }
   }
 
-  Widget getWifiWidget() {
-    if(isDetail) {
+  Widget getWifiWidget(){
+    if(isDetail){
+      List<Widget> list = [];
+      list.add(textDetail('WifiName', data.wifiData!.wifiName));
+      list.add(textDetail('BSSID', data.wifiData!.wifiBSSID));
+      list.add(textDetail('IPv4', data.wifiData!.wifiIPv4));
+      list.add(textDetail('IPv6', data.wifiData!.wifiIPv6));
+      list.add(textDetail('GatewayIP',data.wifiData!.wifiGatewayIP));
+      list.add(textDetail('Submask',data.wifiData!.wifiSubmask));
+      list.add(textDetail('Broadcast',data.wifiData!.wifiBroadcast));
+
+      if(data.wifiData!.wifiName == ''){
+        list.add(textDetail('',''));
+        list.add(Text(Localized.of(context!).text("msg_nowifiname"),
+          style: TextStyle(fontSize: FSIZE_DETAIL-2, color:panelFgColor),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 3,
+        ));
+      }
+
       return Column(
         crossAxisAlignment:CrossAxisAlignment.start,
-        children: [
-          textDetail('WifiName', data.wifiData!.wifiName),
-          textDetail('BSSID', data.wifiData!.wifiBSSID),
-          textDetail('IPv4', data.wifiData!.wifiIPv4),
-          textDetail('IPv6', data.wifiData!.wifiIPv6),
-          textDetail('GatewayIP',data.wifiData!.wifiGatewayIP),
-          textDetail('Broadcast',data.wifiData!.wifiBroadcast),
-          textDetail('Submask',data.wifiData!.wifiSubmask),
-        ]);
+        children: list);
     } else {
       return textSimple(Icon(ICON_WIFI, color:Colors.blue), data.ipv4, data.wifiData!.wifiName, true);
     }
@@ -169,21 +202,23 @@ class DeviceCard extends ConsumerWidget {
     }
   }
 
+  /// Simple text
   Widget textSimple(Icon? icon, String s1, String s2, bool detail) {
+    double fsize2 = (s2.length<25) ? FSIZE_SIMPLE : FSIZE_SIMPLE - 2;
     return Row(children: [
       if(icon!=null) icon,
       if(icon!=null) SizedBox(width: 8),
       Text(s1,style:TextStyle(fontSize: FSIZE_SIMPLE, color:panelFgColor)),
       Expanded(child: SizedBox(width: 1)),
-      Text(s2,style:TextStyle(fontSize: FSIZE_SIMPLE, color:panelFgColor)),
+      Text(s2,style:TextStyle(fontSize: fsize2, color:panelFgColor)),
       if(detail) SizedBox(width: 8),
       if(detail) Icon(Icons.arrow_forward_ios, size:14, color:Colors.grey),
     ]);
   }
 
+  /// Detail text
   Widget textDetail(String s1, String s2) {
     bool isHttp = s2.contains('http');
-
     return Container(
       padding: EdgeInsets.only(bottom:4),
       child: Row(children: [

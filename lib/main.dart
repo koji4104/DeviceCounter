@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import 'localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'device_provider.dart';
 import 'device_screen.dart';
 
@@ -25,6 +28,15 @@ class MyApp extends ConsumerWidget {
         pageTransitionsTheme: MyPageTransitionsTheme(),
       ),
       home: DeviceScreen(),
+      localizationsDelegates: [
+        const SampleLocalizationsDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('en', ''),
+        const Locale('ja', ''),
+      ],
     );
   }
 }

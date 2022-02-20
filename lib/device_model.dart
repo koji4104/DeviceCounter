@@ -17,7 +17,8 @@ class DeviceData{
   }
 }
 
-/// for skein_upnp.dart
+/// Used on DeviceData.upnpData
+/// skein_upnp.dart
 class UpnpData {
   String deviceType='';
   String urlBase='';
@@ -62,6 +63,7 @@ class UpnpData {
   }
 }
 
+/// Used on DeviceData.wifiData
 /// for network_info_plus.dart
 class WifiData{
   String wifiName = "";
@@ -83,6 +85,7 @@ class WifiData{
   }
 }
 
+/// sample data for test
 class SampleUpnpData extends UpnpData {
   String deviceType='urn:schemas-upnp-org:device:MediaServer:1';
   String urlBase='http://10.0.2.17:49152/devinfo.xml';
@@ -100,8 +103,9 @@ class SampleUpnpData extends UpnpData {
   SampleDevice(){}
 }
 
+/// sample data for test
 class SampleWifiData extends WifiData {
-  String wifiName = "Example spot";
+  String wifiName = "Example Spot";
   String wifiBSSID = "02:00:00:00:00:00";
   String wifiIPv4 = "10.0.2.16";
   String wifiIPv6 = "fe80::1111:2222:3333:4444";
