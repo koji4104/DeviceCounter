@@ -7,13 +7,15 @@ const IconData ICON_WIFI = Icons.wifi;
 const IconData ICON_SCAN = Icons.search;
 const IconData ICON_UPNP = Icons.scanner;
 
+const isTestMode = false;
+
 final deviceListProvider = ChangeNotifierProvider((ref) => deviceListNotifier(ref));
 class deviceListNotifier extends ChangeNotifier {
   List<DeviceData> list = [];
   String selectid = "";
 
   deviceListNotifier(ref){
-    if(kIsWeb){
+    if(kIsWeb || isTestMode){
       // Sample data
       WifiData wd = SampleWifiData();
       DeviceData d1 = DeviceData(ipv4:'10.0.2.16');
@@ -25,8 +27,10 @@ class deviceListNotifier extends ChangeNotifier {
       d2.upnpData = upnp;
       this.add(d2);
 
-      DeviceData d3 = DeviceData(ipv4:'10.0.2.25');
+      DeviceData d3 = DeviceData(ipv4:'10.0.2.20');
       this.add(d3);
+      DeviceData d4 = DeviceData(ipv4:'10.0.2.21');
+      this.add(d4);
     }
   }
 

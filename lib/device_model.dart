@@ -105,7 +105,7 @@ class SampleUpnpData extends UpnpData {
 
 /// sample data for test
 class SampleWifiData extends WifiData {
-  String wifiName = "Example Spot";
+  String wifiName = "WiFi Spot";
   String wifiBSSID = "02:00:00:00:00:00";
   String wifiIPv4 = "10.0.2.16";
   String wifiIPv6 = "fe80::1111:2222:3333:4444";

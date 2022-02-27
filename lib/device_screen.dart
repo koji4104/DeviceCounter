@@ -146,7 +146,7 @@ class DeviceScreen extends ConsumerWidget {
   /// Wifi information
   /// use network_info_plus.dart
   wifiInfo(BuildContext context, WidgetRef ref) async {
-    if (kIsWeb){
+    if (kIsWeb || isTestMode){
       print('-- kIsWeb');
       return;
     }

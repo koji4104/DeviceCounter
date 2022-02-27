@@ -130,7 +130,7 @@ class DeviceCard extends ConsumerWidget {
   Widget getWifiWidget(){
     if(isDetail){
       List<Widget> list = [];
-      list.add(textDetail('WifiName', data.wifiData!.wifiName));
+      list.add(textDetail('WiFiName', data.wifiData!.wifiName));
       list.add(textDetail('BSSID', data.wifiData!.wifiBSSID));
       list.add(textDetail('IPv4', data.wifiData!.wifiIPv4));
       list.add(textDetail('IPv6', data.wifiData!.wifiIPv6));
