@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.devicecounter">
+    package="com.github.koji4104.devicecounter">
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- 2022/01 -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
